@@ -1,0 +1,25 @@
+{
+  "name": "grantgetr",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "^14.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "recharts": "^2.7.2",
+    "openai": "^4.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "@types/react": "^18.0.28",
+    "@types/node": "^18.14.6",
+    "eslint": "8.53.0",
+    "eslint-config-next": "14.1.0"
+  }
+}

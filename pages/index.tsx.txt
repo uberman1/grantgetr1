@@ -1,0 +1,122 @@
+// grantgetr/pages/index.tsx
+
+import { useEffect, useState } from "react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, Legend } from "recharts";
+
+const exampleQueries = [
+  "I am starting a travel vlog",
+  "I am opening a restaurant",
+  "I am starting a podcast",
+  "I am starting an HVAC company",
+  "I am launching a software application",
+];
+
+const COLORS = ["#8884d8", "#82ca9d", "#ffc658"];
+
+export default function Home() {
+  const [input, setInput] = useState("");
+  const [exampleIndex, setExampleIndex] = useState(0);
+  const [result, setResult] = useState(null);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setExampleIndex((prev) => (prev + 1) % exampleQueries.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleSearch = async () => {
+    try {
+      // Step 1: Get questions from ChatGPT model
+      const res1 = await fetch("/api/generate-questions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ input, model: "grantcerebro" }),
+      });
+      const { questions } = await res1.json();
+
+      // Step 2: Filter grants using questions
+      const res2 = await fetch("/api/filter-grants", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ input, questions, includeWeb: true }),
+      });
+
+      const data = await res2.json();
+      setResult(data);
+    } catch (err) {
+      console.error("Error:", err);
+    }
+  };
+
+  return (
+    <div className="min-h-screen p-8 bg-white text-black font-sans">
+      <h1 className="text-3xl font-bold text-center mb-6">
+        What kind of business do you have?
+      </h1>
+
+      <div className="flex flex-col items-center space-y-4 mb-10">
+        <input
+          className="w-full max-w-xl p-3 border border-gray-300 rounded text-lg"
+          type="text"
+          placeholder={exampleQueries[exampleIndex]}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+        />
+        <button
+          onClick={handleSearch}
+          className="bg-black text-white px-6 py-2 rounded text-lg hover:bg-gray-800 transition"
+        >
+          Find Grants
+        </button>
+      </div>
+
+      {result && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+          <div className="border p-6 rounded shadow">
+            <h2 className="text-xl font-semibold mb-2">Total Grants Eligible For</h2>
+            <p className="text-4xl">{result.totalGrants}</p>
+            <img src="/images/grants-number.png" alt="Total Grants" className="mt-4 h-32 object-contain" />
+          </div>
+
+          <div className="border p-6 rounded shadow">
+            <h2 className="text-xl font-semibold mb-2">Total Estimated $ Amount</h2>
+            <p className="text-4xl">${result.totalAmount.toLocaleString()}</p>
+            <img src="/images/grants-money.png" alt="Total Money" className="mt-4 h-32 object-contain" />
+          </div>
+
+          <div className="border p-6 rounded shadow">
+            <h2 className="text-xl font-semibold mb-4">Average Award Time</h2>
+            <BarChart width={300} height={200} data={result.avgAwardTime}>
+              <XAxis dataKey="range" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="grants" fill="#8884d8" />
+            </BarChart>
+          </div>
+
+          <div className="border p-6 rounded shadow">
+            <h2 className="text-xl font-semibold mb-4">Likelihood</h2>
+            <PieChart width={300} height={200}>
+              <Pie
+                data={result.likelihood}
+                dataKey="value"
+                nameKey="category"
+                cx="50%"
+                cy="50%"
+                outerRadius={80}
+                label
+              >
+                {result.likelihood.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
